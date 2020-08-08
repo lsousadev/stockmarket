@@ -68,18 +68,19 @@ def register(request):
 def index(request):
     # Authenticated users view their trade
     if request.user.is_authenticated:
-        transactions = Transaction.objects.filter(user=request.user).order_by('-datetime').all()
-        open_contracts = Contract.objects.filter(open_total__gt=0).order_by('-exp').all()
+        transactions = Transaction.objects.filter(user=request.user).order_by('-timestamp').all()
+        open_contracts = Contract.objects.filter(open_qty__gt=0).order_by('-exp').all()
         if request.method == "POST":
             # There are 4 possible results for the request, each represented by a number from 4-7
             req = int(request.POST.get('first')) + int(request.POST.get('second'))
-            results = index_helper(req)
+            user = request.user
+            results = index_helper(req, user)
         else:
             results = {}
         return render(request, "log/index.html", {
-            "transactions": transactions,
+            "open_contracts": open_contracts,
             "results": results,
-            "open_contracts": open_contracts
+            "transactions": transactions
         })
 
     # Everyone else is prompted to sign in
@@ -87,17 +88,17 @@ def index(request):
         return HttpResponseRedirect(reverse("login"))
 
 
-# figure out login_required
+# Figure out login_required
 def upload(request):
     user = request.user
-    last = Transaction.objects.filter(user=user).order_by('-datetime').first()
+    last = Transaction.objects.filter(user=user).order_by('-timestamp').first()
     if not last:
-        last = "[SAMPLE] AMD $86 Call 08/07, 10 contracts averaging $1.49 ($1490)."
+        last = "No transactions uploaded."
     if request.method == "POST":
         #try :
         counter = webull_uploader(request.POST['trades'], user)
-        return render(request, "log/index.html", {
-            "message": "Number of trades uploaded: " + str(counter)
+        return render(request, "log/upload.html", {
+            "message": f"Number of trades uploaded: {counter}."
         })
         #except Exception as e:
         #    print("***************")
@@ -123,78 +124,80 @@ def webull_uploader(trades, user):
         # Skip cancelled and failed trade orders
         if row[3] != "Filled":
             continue
-        # Skip repeat uploads, checking for exact same og_line, date, and avg
-        avg = Decimal(row[7])
-        date = datetime.strptime(row[10][:-4], '%m/%d/%Y %H:%M:%S')
-        og_line = row[1]
-        existent = Contract.objects.filter(og_line=og_line).first()
-        if Transaction.objects.filter(og_line=existent).filter(datetime=date).filter(avg=avg).all():
-            continue
-        # Make quantity in a contract negative if "Sell" so it subtracts from an open position
-        qty = int(row[4])
-        side = row[2]
-        if side == "Sell":
-            qty = -qty
-        # Create Contract object if doesn't exist yet
+        # Unpack all data
+        user = user     # May not be necessary
+        ticker = row[0].split()[0]
         exp = datetime.strptime(row[0].split()[1], '%m/%d/%Y').date()
-        if not Contract.objects.filter(og_line=og_line).all():
+        opt = row[0].split()[4]
+        strike = row[0].split()[5]
+        side = row[2]
+        qty = int(row[4])
+        avg = Decimal(row[7])
+        timestamp = datetime.strptime(row[10][:-4], '%m/%d/%Y %H:%M:%S')
+        ref = row[1]      # Could be row[0] as well
+        # Skip repeat uploads, checking for exact same date and avg. Might need to add contract to filters
+        if Transaction.objects.filter(timestamp=timestamp).filter(avg=avg).all():
+            continue
+        # Create Contract object if doesn't exist yet
+        if not Contract.objects.filter(ref=ref).all():
             contract = Contract(
                 user = user,
-                og_line = og_line,
+                ticker = ticker,
                 exp = exp,
-                avg = avg,
+                opt = opt,
+                strike = strike,
+                open_avg = avg,
                 open_qty = qty,
-                open_total = avg * qty * 100
+                ref = ref
             )
             contract.save()
         # Update Contract object based on it being a sell or a buy
         else:
-            c = Contract.objects.get(og_line=og_line)
+            c = Contract.objects.get(ref=ref)
+            old_avg = c.open_avg
             old_qty = c.open_qty
-            old_total = c.open_total
-            old_avg = c.avg
+            # Make sell qty negative for Contract purposes
+            if side == "Sell":
+                qty = -qty
+            # If closing position, set all to 0
             if old_qty + qty == 0:
-                c.avg = 0
+                c.open_avg = 0
                 c.open_qty = 0
-                c.open_total = 0
                 c.save()
             elif row[2] == "Buy":
-                c.avg = ((old_avg * old_qty) + (avg * qty)) / (old_qty + qty)
+                c.open_avg = ((old_avg * old_qty) + (avg * qty)) / (old_qty + qty)
                 c.open_qty = old_qty + qty
-                c.open_total = ((((old_avg * old_qty) + (avg * qty)) / (old_qty + qty)) * (old_qty + qty)) * 100
                 c.save()
             else:
                 c.open_qty = old_qty + qty
-                c.open_total = (old_avg * (old_qty + qty)) * 100
                 c.save()
-        # Invert sign for quantity to better represent totals in transactions
-        qty = -qty
+        # Revert qty back to positive for transactions
+        qty = abs(qty)
         # Create new Transaction
         transaction = Transaction(
             user = user,
-            ticker = row[0].split()[0],
-            exp = exp,
-            opt = row[0].split()[4],
-            strike = row[0].split()[5],
-            side = row[2],
+            contract = Contract.objects.get(ref=ref),
+            side = side,
             qty = qty,
             avg = avg,
-            total = qty * Decimal(row[7]) * 100,
-            datetime = date,
-            og_line = Contract.objects.get(og_line=og_line)
+            total = qty * avg * 100,
+            timestamp = timestamp
         )
         transaction.save()
         counter += 1
     return counter
 
-def index_helper(req):
+def index_helper(req, user):
     results = {}
-    total_trades = Transaction.objects.count()
+    user_contracts = Contract.objects.filter(user=user).all()
+    user_transactions = Transaction.objects.filter(user=user).all()
+    total_trades = user_transactions.count()
     if req == 4:
         results['all'] = {'both': {}}
         results['all']['both']['ticker'] = "All Tickers"
         results['all']['both']['opt'] = "All Options"
-        results['all']['both']['total'] = Transaction.objects.all().aggregate(Sum('total'))# - Contract.objects.filter(total__gt=0).all().aggregate(Sum('total'))
+        results['all']['both']['total'] = user_transactions.filter(side="Sell").aggregate(Sum('total'))['total__sum'] \
+                                        - user_transactions.filter(side="Buy").aggregate(Sum('total'))['total__sum']
         results['all']['both']['trade_perc'] = f'100% ({total_trades} of {total_trades})'
     if req == 6:
         results['all'] = {'call': {}, 'put': {}}
@@ -202,38 +205,48 @@ def index_helper(req):
         results['all']['put']['ticker'] = "All Tickers"
         results['all']['call']['opt'] = "Calls"
         results['all']['put']['opt'] = "Puts"
-        results['all']['call']['total'] = Transaction.objects.filter(opt="Call").all().aggregate(Sum('total'))
-        results['all']['put']['total'] = Transaction.objects.filter(opt="Put").all().aggregate(Sum('total'))
-        total_calls = Transaction.objects.filter(opt="Call").count()
-        total_puts = Transaction.objects.filter(opt="Put").count()
+        results['all']['call']['total'] = user_transactions.filter(contract__opt="Call").filter(side="Sell").all().aggregate(Sum('total'))['total__sum'] \
+                                        - user_transactions.filter(contract__opt="Call").filter(side="Buy").all().aggregate(Sum('total'))['total__sum'] # Not sure ".all()" is needed
+        results['all']['put']['total'] = user_transactions.filter(contract__opt="Put").filter(side="Sell").all().aggregate(Sum('total'))['total__sum'] \
+                                        - user_transactions.filter(contract__opt="Put").filter(side="Buy").all().aggregate(Sum('total'))['total__sum'] # Not sure ".all()" is needed
+        total_calls = user_transactions.filter(contract__opt="Call").count()
+        total_puts = user_transactions.filter(contract__opt="Call").count()
         results['all']['call']['trade_perc'] = f'{round(total_calls / total_trades * 100)}% ({total_calls} of {total_trades})'
         results['all']['put']['trade_perc'] = f'{round(total_puts / total_trades * 100)}% ({total_puts} of {total_trades})'
     if req == 5:
-        for ticker in Transaction.objects.values_list('ticker', flat=True).order_by('ticker').distinct():
+        for ticker in user_contracts.values_list('ticker', flat=True).order_by('ticker').distinct(): # check end of page for possible ordering by transactions
             results[ticker] = {'both': {}}
             results[ticker]['both']['ticker'] = ticker
             results[ticker]['both']['opt'] = "All Options"
-            results[ticker]['both']['total'] = Transaction.objects.filter(ticker=ticker).all().aggregate(Sum('total'))
-            total_both = Transaction.objects.filter(ticker=ticker).count()
+            results[ticker]['both']['total'] = user_transactions.filter(contract__ticker=ticker).filter(side="Sell").all().aggregate(Sum('total'))['total__sum'] \
+                                            - user_transactions.filter(contract__ticker=ticker).filter(side="Buy").all().aggregate(Sum('total'))['total__sum']
+            total_both = user_transactions.filter(contract__ticker=ticker).count()
             results[ticker]['both']['trade_perc'] = f'{round(total_both / total_trades * 100)}% ({total_both} of {total_trades})'
     if req == 7:
-        for ticker in Transaction.objects.values_list('ticker', flat=True).order_by('ticker').distinct():
+        for ticker in user_contracts.values_list('ticker', flat=True).order_by('ticker').distinct(): # check end of page for possible ordering by transactions
             results[ticker] = {}
-            if Transaction.objects.filter(ticker=ticker).filter(opt="Call").count():
+            if user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Call").count():
                 results[ticker]['call'] = {}
                 results[ticker]['call']['ticker'] = ticker
                 results[ticker]['call']['opt'] = "Calls"
-                results[ticker]['call']['total'] = Transaction.objects.filter(ticker=ticker).filter(opt="Call").all().aggregate(Sum('total'))
-                total_calls = Transaction.objects.filter(ticker=ticker).filter(opt="Call").count()
+                results[ticker]['call']['total'] = user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Call").filter(side="Sell").all().aggregate(Sum('total'))['total__sum'] \
+                                                - user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Call").filter(side="Buy").all().aggregate(Sum('total'))['total__sum']
+                total_calls = user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Call").count()
                 results[ticker]['call']['trade_perc'] = f'{round(total_calls / total_trades * 100)}% ({total_calls} of {total_trades})'
-            if Transaction.objects.filter(ticker=ticker).filter(opt="Put").count():
+            if user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Put").count():
                 results[ticker]['put'] = {}
                 results[ticker]['put']['ticker'] = ticker
                 results[ticker]['put']['opt'] = "Puts"
-                results[ticker]['put']['total'] = Transaction.objects.filter(ticker=ticker).filter(opt="Put").all().aggregate(Sum('total'))
-                total_puts = Transaction.objects.filter(ticker=ticker).filter(opt="Put").count()
+                results[ticker]['put']['total'] = user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Put").filter(side="Sell").all().aggregate(Sum('total'))['total__sum'] \
+                                                - user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Put").filter(side="Buy").all().aggregate(Sum('total'))['total__sum']
+                total_puts = user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Put").count()
                 results[ticker]['put']['trade_perc'] = f'{round(total_puts / total_trades * 100)}% ({total_puts} of {total_trades})'
     return results
 
 
 #   from log.models import User, Contract, Transaction
+
+# The proper way to do this is with annotation.
+# This will reduce the amount of database queries to 1, and ordering will be a simple order_by function:
+# from django.db.models import Count
+# cat_list = Category.objects.annotate(count=Count('project_set__id')).order_by('count')

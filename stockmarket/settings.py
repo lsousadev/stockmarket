@@ -33,8 +33,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'historical',
     'log',
-    'django_extensions',
-    'mathfilters',
+    'django_extensions',    # python ./manage.py reset_db --router=default
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

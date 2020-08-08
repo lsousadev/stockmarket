@@ -7,15 +7,9 @@
 
     <div style="display:inline-block; text-align: left;">
         <ul>
-            <li>
-                Last logged transaction date: <strong>{{ last.datetime }}</strong> Please avoid double-entries.
-                <ul class="nested-list">
-                    <li><i>{{ last }}</i></li>
-                </ul>
-            </li>
-            <li>
-                Copypaste <i>Webull_Orders_Records_Options</i> CSV text below.
-            </li>
+            <li>Last logged transaction date: <i>{{ last.timestamp }}</i></li>
+            <li>Please avoid double-entries.</li>
+            <li>Copypaste <i>Webull_Orders_Records_Options</i> CSV text below.</li>
         </ul>
         <br>
     </div>
