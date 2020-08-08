@@ -1,0 +1,46 @@
+body {
+    padding: 20px;
+}
+
+main
+{
+    text-align: center;
+}
+
+main .form-control
+{
+    /* center form controls */
+    display: inline-block;
+
+    /* override Bootstrap's 100% width for form controls */
+    width: auto;
+}
+
+#trades {
+    min-height: 200px;
+    min-width: 400px;
+    height: 50vh;
+    width: 60vw;
+}
+
+.nested-list {
+    list-style-type: square;
+}
+
+.half {
+    display: inline-block;
+    width: 45vw;
+    vertical-align: top;
+}
+
+.left {
+    border-right: 1px solid lightgray;
+    display: inline-block;
+}
+
+.right {
+    border-left: 1px solid lightgray;
+    display: inline-block;
+    text-align: left;
+    font-size: 13px;
+}

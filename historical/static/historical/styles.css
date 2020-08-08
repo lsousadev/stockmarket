@@ -1,0 +1,43 @@
+.center-column {
+    background-color: floralwhite;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+}
+
+.center-row {
+    background-color: floralwhite;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+}
+
+.spaced {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    height: 200px;
+    width: 260px;
+    background-color: floralwhite;
+    padding: 30px;
+    border-radius: 25px;
+    border: 15px double darkcyan;
+}
+
+.hist {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    height: 200px;
+    width: 45%;
+    background-color: floralwhite;
+    padding: 30px;
+    border-radius: 25px;
+    border: 15px double darkcyan;
+}

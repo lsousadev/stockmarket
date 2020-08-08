@@ -1,0 +1,30 @@
+{% extends "log/layout.html" %}
+
+{% block body %}
+
+    <h2>Upload Trades</h2>
+    <br>
+
+    <div style="display:inline-block; text-align: left;">
+        <ul>
+            <li>
+                Last logged transaction date: <strong>{{ last.datetime }}</strong> Please avoid double-entries.
+                <ul class="nested-list">
+                    <li><i>{{ last }}</i></li>
+                </ul>
+            </li>
+            <li>
+                Copypaste <i>Webull_Orders_Records_Options</i> CSV text below.
+            </li>
+        </ul>
+        <br>
+    </div>
+    <form action="{% url 'upload' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <textarea class="form-control" name="trades" id="trades" required>{{ prefill }}</textarea>
+        </div>
+        <input class="btn btn-primary" type="submit" value="Upload">
+    </form>
+
+{% endblock %}

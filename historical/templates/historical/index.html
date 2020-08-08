@@ -1,0 +1,24 @@
+{% extends "historical/layout.html" %}
+
+{% block title %}
+Title Test
+{% endblock %}
+{% block body %}
+{% if error %}
+{% for e in error %}
+<div class="alert alert-warning" role="alert">{{ e }}</div>
+{% endfor %}
+{% endif %}
+<div class="center-row">
+    <div class="center-column">
+        <div class="spaced">
+            <span style="font-weight: bold; font-size: 24px;">Start Ticker Study</span>
+            <form style="text-align: left;" action="{% url 'historical:study' %}" method="post">
+                {% csrf_token %}
+                {{ studyform }}
+                <input type="submit" style="display: block; margin: 0 auto; margin-top: 15px;">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
