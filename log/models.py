@@ -13,7 +13,7 @@ class Transaction(models.Model):
     contract = models.ForeignKey("Contract", on_delete=models.CASCADE, related_name="trades_c")
     side = models.CharField(max_length=4)
     qty = models.SmallIntegerField()
-    avg = models.DecimalField(max_digits=7, decimal_places=2)
+    avg = models.DecimalField(max_digits=8, decimal_places=3)
     total = models.DecimalField(max_digits=8, decimal_places=2)
     timestamp = models.DateTimeField()
 
@@ -27,9 +27,23 @@ class Contract(models.Model):
     exp = models.DateField()
     opt = models.CharField(max_length=4)
     strike = models.CharField(max_length=8)
-    open_avg = models.DecimalField(max_digits=7, decimal_places=2)
     open_qty = models.SmallIntegerField()
+    open_avg = models.DecimalField(max_digits=8, decimal_places=3)
+    open_total = models.DecimalField(max_digits=8, decimal_places=2)
     ref = models.CharField(max_length=45)
 
+    def serialize(self):
+        return {
+            "user": self.user.username,
+            "ticker": self.ticker,
+            "exp": self.exp,
+            "opt": self.opt,
+            "strike": self.strike,
+            "open_qty": self.open_qty,
+            "open_avg": self.open_avg,
+            "open_total": self.open_total,
+            "ref": self.ref
+        }
+
     def __str__(self):
-        return f"{self.ticker} {self.strike} {self.opt} {self.exp} - QTY OPEN: {self.open_qty} AVG: ${self.open_avg} OPEN TOTAL: ${self.open_qty * self.open_avg} - {self.user}"
+        return f"{self.ticker} {self.strike} {self.opt} {self.exp} - QTY OPEN: {self.open_qty} AVG: ${self.open_avg} OPEN TOTAL: ${self.open_total} - {self.user}"

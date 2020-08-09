@@ -1,27 +1,27 @@
 {% extends "log/layout.html" %}
 
 {% block body %}
-
     <h2>Options</h2>
     <br>
-
     <div class="half left">
         <h5>Stats</h5>
-        <form class="form-check-inline" action="{% url 'index' %}" method="post">
+        <form class="form-check-inline" id="query-form" action="{% url 'index' %}" method="post">
             {% csrf_token %}
             <div class="form-group mt-3">
-                <select class="form-control" name="first">
-                    <option value="1">All stocks</option>
+                <select class="form-control" id="first-select" name="first">
+                    <!-- <option value="0" disabled selected hidden>Stocks</option> -->
+                    <option value="1">Group all stocks</option>
                     <option value="2">Per stock</option>
                 </select>
             </div>
             <div class="form-group ml-2 mt-3">
-                <select class="form-control" name="second">
-                    <option value="3">All options</option>
+                <select class="form-control" id="second-select" name="second">
+                    <!-- <option value="4" disabled selected hidden>Options</option> -->
+                    <option value="3">Group all options</option>
                     <option value="5">Call/Put split</option>
                 </select>
             </div>
-            <input class="btn btn-primary ml-2" type="submit" value="Submit">
+            <input class="btn btn-primary ml-2" id="query-submit" type="submit" value="Submit">
         </form>
         <br>
         {% if results %}
@@ -51,8 +51,8 @@
         <hr>
         <div style="text-align: center;">
             <h5>Open Positions</h5>
-            <small>Please click here to update expired contracts.</small>
         </div>
+        <br>
         <table class="table table-striped table-sm">
             <thead>
                 <tr>
@@ -76,14 +76,17 @@
                         <td>{{ contract.open_avg }}</td>
                         <td>{{ contract.open_total }}</td>
                     </tr>
-                {% empty %}
-                    <li>No open positions.</li>
                 {% endfor %}
             </tbody>
         </table>
+        {% if not open_contracts %}
+            No open positions.<br><br>
+        {% endif %}
+        <button class="btn btn-secondary btn-sm" id="refresh-expired">Remove Expired Contracts</button>
+        <hr>
     </div>
     <div class="half right">
-        <div style="text-align: center;">
+        <div>
             <h5>Transaction Log</h5>
             <small>All trades in Eastern time. Open positions in bold.</small>
         </div>
@@ -115,11 +118,34 @@
                         <td>{{ trade.avg }}</td>
                         <td>{{ trade.total }}</td>
                     </tr>
-                {% empty %}
-                    <li>No transactions recorded.</li>
                 {% endfor %}
             </tbody>
         </table>
+        {% if not transactions %}
+            No transactions recorded.
+        {% endif %}
+        <hr>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('#refresh-expired').addEventListener('click', refresh_expired);
+            //document.getElementById('query-submit').disabled = true;
+            //document.querySelector('#first-select').addEventListener('onchange', change_button);
+            //document.querySelector('#second-select').addEventListener('onchange', change_button);
+        })
+        function refresh_expired() {
+            fetch('', {
+                method: 'PUT'
+            })
+            .then(location.reload())
+        }
+        //function change_button() {
+        //    if (document.getElementById('first-select').value != "0" && document.getElementById('second-select').value != "4") {
+        //        document.getElementById('query-submit').disabled = false;
+        //    } else {
+        //        document.getElementById('query-submit').disabled = true;
+        //    }
+        //}
+    </script>
 {% endblock %}
