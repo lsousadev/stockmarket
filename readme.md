@@ -7,11 +7,15 @@ A website with two apps:
 ---
 ## Historical
 ### Features
-- A few
+- Four forms that request yfinance API through Django server and receive formatted data (stats) to display on main page
 ### Todo
-- [ ] A lot
+- [ ] Use one JS function for all tables instead of copypasting 99% of the function for each table
+- [ ] Link Historical app to Options Log app via navbar link
+- [ ] Change color of most prominent stats based on value
+- [ ] Possible idea: add list of all transactions within date range under table
 ### Notes
 08/08/2020 - Gotta redo most of the system, sort of an abandoned app as of now. Possible next move is to remove database altogether and just pull info from yfinance directly every time.
+08/09/2020 - Completely deleted database and models, used JS fetch to request data, and basic Python to get yfinance API data and feed it back for JS to render it in page without reloading. Does exactly what I set out to accomplish.
 
 ---
 ## Options Log
@@ -34,5 +38,7 @@ A website with two apps:
 - [ ] Future - Optimize index_helper function (shows main page stats from form POST). Since only 4 possible results, each is currently hard-coded
 - [ ] Future - Chart representation for stats
 - [ ] Future - Sort/filter for tables
+- [ ] Future - Allow upload from other brokers
 ### Notes
 08/08/2020 - After getting the backend to work, I realized my schema was backwards. Details such as option ticker, expiration date, option type, and strike should be in the Contract object, not in every single Transaction object. Since it does work as of now, I'm pushing this version and then redoing the whole database and everything directly affected by it. That's the main focus now.
+08/09/2020 - New database structure finalized yesterday plus a few TODOs. Everything works according to plan and it does what I wanted it to do when I created the app. There's still plenty to improve with JS and the index_helper function, along with side goals and future features.

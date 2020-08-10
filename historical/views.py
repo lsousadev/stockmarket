@@ -1,52 +1,72 @@
-from django import forms
+import json
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
-from datetime import date
-
-from .models import Ticker, Historical
-from .helpers import yf, hist_render
-
-class StudyForm(forms.Form):
-    ticker = forms.CharField(label="Ticker")
-    startdate = forms.CharField(label="Start Date")
-    enddate = forms.CharField(label="End Date")
+from datetime import date, datetime
+import yfinance
 
 # Create your views here.
+@csrf_exempt
 def index(request):
-    return render(request, "historical/index.html", {
-        "studyform": StudyForm()
-    })
-
-def study(request):
-    studyform = StudyForm(request.POST)
-    if studyform.is_valid():
-        error_message = []
-        # get ticker name from form and create/update it in "Ticker" table
-        ticker = studyform.cleaned_data['ticker']
-        t = Ticker(symbol=ticker)
-        t.save()
-        # add 1 year of historical data from ticker to "Historical" table
-        # t is needed because it is a model/foreign key)
-        yf(ticker, t)
-        date_range = Historical.objects.filter(ticker=ticker).values_list('date', flat=True)
-        if not date_range[1]:
-            error_message.append("Ticker does not exist or not supported by Yahoo Finance.")
-        startdate = studyform.cleaned_data['startdate']
-        if startdate < date_range[0]:
-            error_message.append("The start date cannot be over a year in the past.")
-        enddate = studyform.cleaned_data['enddate']
-        if enddate > date_range[len(date_range) - 1]:
-            error_message.append("The end date has to be the last day the stock was traded (" + date_range[len(date_range) - 1] + ") or earlier.")
-        if error_message:
-            return render(request, "historical/index.html", {
-                "studyform": studyform,
-                "error": error_message
-            })
-        response_data = hist_render(ticker, startdate, enddate)
-    print(response_data)
-    return render(request, "historical/study.html", {
-            "ticker": ticker,
-            "response": response_data
-        })
+    if request.method == "POST":
+        # Get parameters of request
+        data = json.loads(request.body)
+        ticker = data['ticker']
+        start_date = data['start']
+        end_date = data['end']
+        # yfinance API
+        data = yfinance.Ticker(ticker)
+        hist = data.history(start=start_date, end=end_date)
+        total_days_received = len(hist.index)
+        # Set first overnight to 0 by matching non-existing close to first open
+        lastclose = hist.at[hist.index[0], 'Open']
+        # Translator for .weekday()
+        response_data = [{"weekday": "Monday"}, {"weekday": "Tuesday"}, {"weekday": "Wednesday"}, {"weekday": "Thursday"}, {"weekday": "Friday"}]
+        # Start counters for positive overnights, intradays, and days for % stats
+        for day in response_data:
+            day['overnight'] = 0
+            day['intraday'] = 0
+            day['sum_onid'] = 0
+            day['positive_overnights'] = 0
+            day['positive_intradays'] = 0
+            day['positive_sum_onids'] = 0
+            day['total_days'] = 0
+            day['volume'] = 0
+        # Loop for data and populate response
+        for line in hist.index:
+            weekday = datetime.strptime(str(line)[:-9], '%Y-%m-%d').date().weekday()
+            open_price = hist.at[line, 'Open']
+            close_price = hist.at[line, 'Close']
+            # print(f"Weekday: {weekday} | Priceopen: {priceopen} | Priceclose: {priceclose} | Lastclose: {lastclose}")
+            response_data[weekday]['overnight'] += (open_price - lastclose) / lastclose
+            response_data[weekday]['intraday'] += (close_price - open_price) / open_price
+            response_data[weekday]['sum_onid'] += (close_price - lastclose) / lastclose
+            if (open_price - lastclose) / lastclose >= 0:
+                response_data[weekday]['positive_overnights'] += 1
+            if (close_price - open_price) / open_price >= 0:
+                response_data[weekday]['positive_intradays'] += 1
+            if (close_price - lastclose) / lastclose >= 0:
+                response_data[weekday]['positive_sum_onids'] += 1
+            response_data[weekday]['total_days'] += 1
+            response_data[weekday]['volume'] += hist.at[line, 'Volume']
+            lastclose = close_price
+        # Prepare response_data to be sent while making sure all days from data were utilized
+        final_check = 0
+        for day in response_data:
+            total_days = day['total_days']
+            final_check += total_days
+            day['overnight'] = round((day['overnight'] / total_days) * 100, 2)
+            day['intraday'] = round((day['intraday'] / total_days) * 100, 2)
+            day['sum_onid'] = round((day['sum_onid'] / total_days) * 100, 2)
+            day['positive_overnights'] = round((day['positive_overnights'] / total_days) * 100)
+            day['positive_intradays'] = round((day['positive_intradays'] / total_days) * 100)
+            day['positive_sum_onids'] = round((day['positive_sum_onids'] / total_days) * 100)
+            day['volume'] = round((day['volume'] / total_days) / 1000000)
+        if final_check != total_days_received:
+            return JsonResponse({
+                "error": "Something went wrong. Days requested: {total_days_received} | Days processed: {final_check}"
+            }, status=400)
+        return JsonResponse(response_data, status=200, safe=False)
+    # If response.method == "GET":
+    return render(request, "historical/index.html")
