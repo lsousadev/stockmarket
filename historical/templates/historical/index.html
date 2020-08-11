@@ -8,13 +8,13 @@
             <form class="form-inline mb-3 mt-2" id="f1" action="{% url 'index' %}" method="post">
                 {% csrf_token %}
                 <div>
-                    <input type="text" class="form-control ml-2" id="t1" placeholder="Ticker">
+                    <input type="text" class="form-control ml-2 ticker" id="t1" placeholder="Ticker">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="ds1">
+                    <input type="date" class="form-control ml-2 start-date" id="ds1">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="de1">
+                    <input type="date" class="form-control ml-2 end-date" id="de1">
                 </div>
                 <input class="btn btn-secondary ml-2" id="b1" type="submit" value="Retrieve">
             </form>
@@ -60,13 +60,13 @@
             <form class="form-inline mb-3 mt-2" id="f2" action="{% url 'index' %}" method="post">
                 {% csrf_token %}
                 <div>
-                    <input type="text" class="form-control ml-2" id="t2" placeholder="Ticker">
+                    <input type="text" class="form-control ml-2 ticker" id="t2" placeholder="Ticker">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="ds2">
+                    <input type="date" class="form-control ml-2 start-date" id="ds2">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="de2">
+                    <input type="date" class="form-control ml-2 end-date" id="de2">
                 </div>
                 <input class="btn btn-secondary ml-2" id="b2" type="submit" value="Retrieve">
             </form>
@@ -111,13 +111,13 @@
             <form class="form-inline mb-3 mt-2" id="f3" action="{% url 'index' %}" method="post">
                 {% csrf_token %}
                 <div>
-                    <input type="text" class="form-control ml-2" id="t3" placeholder="Ticker">
+                    <input type="text" class="form-control ml-2 ticker" id="t3" placeholder="Ticker">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="ds3">
+                    <input type="date" class="form-control ml-2 start-date" id="ds3">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="de3">
+                    <input type="date" class="form-control ml-2 end-date" id="de3">
                 </div>
                 <input class="btn btn-secondary ml-2" id="b3" type="submit" value="Retrieve">
             </form>
@@ -161,13 +161,13 @@
             <form class="form-inline mb-3 mt-2" id="f4" action="{% url 'index' %}" method="post">
                 {% csrf_token %}
                 <div>
-                    <input type="text" class="form-control ml-2" id="t4" placeholder="Ticker">
+                    <input type="text" class="form-control ml-2 ticker" id="t4" placeholder="Ticker">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="ds4">
+                    <input type="date" class="form-control ml-2 start-date" id="ds4">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-2" id="de4">
+                    <input type="date" class="form-control ml-2 end-date" id="de4">
                 </div>
                 <input class="btn btn-secondary ml-2" id="b4" type="submit" value="Retrieve">
             </form>
