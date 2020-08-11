@@ -13,6 +13,7 @@ A website with two apps:
 - [ ] Link Historical app to Options Log app via navbar link
 - [ ] Change color of most prominent stats based on value
 - [x] Possible idea: add list of all transactions within date range under table
+- [ ] Make it a little more mobile-friendly
 ### Notes
  - 08/08/2020 - Gotta redo most of the system, sort of an abandoned app as of now. Possible next move is to remove database altogether and just pull info from yfinance directly every time.
  - 08/09/2020 - Completely deleted database and models, used JS fetch to request data, and basic Python to get yfinance API data and feed it back for JS to render it in page without reloading. Does exactly what I set out to accomplish.
