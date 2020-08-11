@@ -12,10 +12,11 @@ A website with two apps:
 - [ ] Use one JS function for all tables instead of copypasting 99% of the function for each table
 - [ ] Link Historical app to Options Log app via navbar link
 - [ ] Change color of most prominent stats based on value
-- [ ] Possible idea: add list of all transactions within date range under table
+- [x] Possible idea: add list of all transactions within date range under table
 ### Notes
 08/08/2020 - Gotta redo most of the system, sort of an abandoned app as of now. Possible next move is to remove database altogether and just pull info from yfinance directly every time.
 08/09/2020 - Completely deleted database and models, used JS fetch to request data, and basic Python to get yfinance API data and feed it back for JS to render it in page without reloading. Does exactly what I set out to accomplish.
+08/10/2020 - Adjusted everything for hosting on Heroku. Added a list of days for each selected range, made a hide button for it. Adjusted a lot of CSS. Python looks pretty good. CSS looks very serviceable. JS looks worse than ever, hardcoded everything in the longest way possible.
 
 ---
 ## Options Log
@@ -32,8 +33,9 @@ A website with two apps:
 - [x] Format 'open positions' div into a table (after fixing database)
 - [x] Figure out how to update 'profit' field on navigation bar (refresh button vs. auto)
 - [ ] Instructions page for WeBull upload with images
-- [ ] Favicon
-- [ ] Paginate transactions list on the right | https://docs.djangoproject.com/en/3.0/topics/pagination/ | https://getbootstrap.com/docs/4.4/components/pagination/
+- [x] Favicon
+- [ ] ~~Paginate transactions list on the right~~
+- [ ] Set transactions list height and make it scrollable
 - [ ] Fix commented lines in index.html to add Select Option placeholders and JS script for enabling and disabling Submit button
 - [ ] Future - Optimize index_helper function (shows main page stats from form POST). Since only 4 possible results, each is currently hard-coded
 - [ ] Future - Chart representation for stats
