@@ -9,14 +9,14 @@ A website with two apps:
 ### Features
 - Four forms that request yfinance API through Django server and receive formatted data (stats) to display on main page
 ### Todo
-- [ ] Use one JS function for all tables instead of copypasting 99% of the function for each table
+- [x] Use one JS function for all tables instead of copypasting 99% of the function for each table
 - [ ] Link Historical app to Options Log app via navbar link
 - [ ] Change color of most prominent stats based on value
 - [x] Possible idea: add list of all transactions within date range under table
 ### Notes
-08/08/2020 - Gotta redo most of the system, sort of an abandoned app as of now. Possible next move is to remove database altogether and just pull info from yfinance directly every time.
-08/09/2020 - Completely deleted database and models, used JS fetch to request data, and basic Python to get yfinance API data and feed it back for JS to render it in page without reloading. Does exactly what I set out to accomplish.
-08/10/2020 - Adjusted everything for hosting on Heroku. Added a list of days for each selected range, made a hide button for it. Adjusted a lot of CSS. Python looks pretty good. CSS looks very serviceable. JS looks worse than ever, hardcoded everything in the longest way possible.
+ - 08/08/2020 - Gotta redo most of the system, sort of an abandoned app as of now. Possible next move is to remove database altogether and just pull info from yfinance directly every time.
+ - 08/09/2020 - Completely deleted database and models, used JS fetch to request data, and basic Python to get yfinance API data and feed it back for JS to render it in page without reloading. Does exactly what I set out to accomplish.
+ - 08/10/2020 - Adjusted everything for hosting on Heroku. Added a list of days for each selected range, made a hide button for it. Adjusted a lot of CSS. Python looks pretty good. CSS looks very serviceable. JS looks worse than ever, hardcoded everything in the longest way possible.
 
 ---
 ## Options Log
@@ -42,5 +42,5 @@ A website with two apps:
 - [ ] Future - Sort/filter for tables
 - [ ] Future - Allow upload from other brokers
 ### Notes
-08/08/2020 - After getting the backend to work, I realized my schema was backwards. Details such as option ticker, expiration date, option type, and strike should be in the Contract object, not in every single Transaction object. Since it does work as of now, I'm pushing this version and then redoing the whole database and everything directly affected by it. That's the main focus now.
-08/09/2020 - New database structure finalized yesterday plus a few TODOs. Everything works according to plan and it does what I wanted it to do when I created the app. There's still plenty to improve with JS and the index_helper function, along with side goals and future features.
+ - 08/08/2020 - After getting the backend to work, I realized my schema was backwards. Details such as option ticker, expiration date, option type, and strike should be in the Contract object, not in every single Transaction object. Since it does work as of now, I'm pushing this version and then redoing the whole database and everything directly affected by it. That's the main focus now.
+ - 08/09/2020 - New database structure finalized yesterday plus a few TODOs. Everything works according to plan and it does what I wanted it to do when I created the app. There's still plenty to improve with JS and the index_helper function, along with side goals and future features.
