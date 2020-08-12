@@ -4,21 +4,32 @@
 
     <h2>Upload Trades</h2>
     <br>
-
-    <div style="display:inline-block; text-align: left;">
-        <ul>
-            <li>Last logged transaction date: <i>{{ last.timestamp }}</i></li>
-            <li>Please avoid double-entries.</li>
-            <li>Copypaste <i>Webull_Orders_Records_Options</i> CSV text below.</li>
-        </ul>
-        <br>
+    <div class="row">
+        <div class="col" style="text-align: right;">
+            <ul style="display: inline-block; text-align: left;">
+                <li>Last logged transaction date: <i>{{ last.timestamp }}</i></li>
+                <li>Please avoid double-entries.</li>
+            </ul>
+        </div>
+        <div class="col" style="text-align: left;">
+            <form class="form" id="query-form" action="{% url 'instructions' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Instructions: </label>
+                    <select class="form-control ml-1" name="broker">
+                        <option value="webull">Webull</option>
+                    </select>
+                    <input class="btn btn-secondary btn-sm ml-1 mb-2" type="submit" value="Go">
+                </div>
+            </form>
+        </div>
     </div>
     <form action="{% url 'upload' %}" method="post">
         {% csrf_token %}
         <div class="form-group">
             <textarea class="form-control" name="trades" id="trades" required>{{ prefill }}</textarea>
         </div>
-        <input class="btn btn-primary" type="submit" value="Upload">
+        <input class="btn btn-secondary btn-lg" type="submit" value="Upload">
     </form>
 
 {% endblock %}

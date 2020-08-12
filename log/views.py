@@ -83,10 +83,9 @@ def index(request):
     if request.method == "POST":
         # There are 4 possible results for the request, each represented by a number from 4-7
         req = int(request.POST.get('first')) + int(request.POST.get('second'))
-        user = request.user
-        results = index_helper(req, user)
+        results = index_helper(req, request.user)
     else:
-        results = {}
+        results = index_helper(4, request.user)
     return render(request, "log/index.html", {
         "open_contracts": open_contracts,
         "results": results,
@@ -120,6 +119,16 @@ def upload(request):
     return render(request, 'log/upload.html', {
         "last": last
     })
+
+
+def instructions(request):
+    if request.method == 'POST':
+        if request.POST.get('broker') == 'webull':
+            return render(request, 'log/webull.html')
+        else:
+            return HttpResponseRedirect(reverse("upload"))
+    else:
+        return HttpResponseRedirect(reverse("upload"))
 
 
 def webull_uploader(trades, user):
@@ -213,7 +222,7 @@ def index_helper(req, user):
         results['all']['both']['opt'] = "All Options"
         results['all']['both']['total'] = user_transactions.aggregate(Sum('total'))['total__sum']
         results['all']['both']['trade_perc'] = f'100% ({total_trades} of {total_trades})'
-    if req == 6:
+    elif req == 6:
         results['all'] = {'call': {}, 'put': {}}
         results['all']['call']['ticker'] = "All Tickers"
         results['all']['put']['ticker'] = "All Tickers"
@@ -225,7 +234,7 @@ def index_helper(req, user):
         total_puts = user_transactions.filter(contract__opt="Put").count()
         results['all']['call']['trade_perc'] = f'{round(total_calls / total_trades * 100)}% ({total_calls} of {total_trades})'
         results['all']['put']['trade_perc'] = f'{round(total_puts / total_trades * 100)}% ({total_puts} of {total_trades})'
-    if req == 5:
+    elif req == 5:
         for ticker in user_contracts.values_list('ticker', flat=True).order_by('ticker').distinct(): # check end of page for possible ordering by transactions
             results[ticker] = {'both': {}}
             results[ticker]['both']['ticker'] = ticker
@@ -233,8 +242,8 @@ def index_helper(req, user):
             results[ticker]['both']['total'] = user_transactions.filter(contract__ticker=ticker).aggregate(Sum('total'))['total__sum']
             total_both = user_transactions.filter(contract__ticker=ticker).count()
             results[ticker]['both']['trade_perc'] = f'{round(total_both / total_trades * 100)}% ({total_both} of {total_trades})'
-    if req == 7:
-        for ticker in user_contracts.values_list('ticker', flat=True).order_by('ticker').distinct(): # check end of page for possible ordering by transactions
+    elif req == 7:
+        for ticker in user_contracts.values_list('ticker', flat=True).distinct(): # check end of page for possible ordering by transactions
             results[ticker] = {}
             if user_transactions.filter(contract__ticker=ticker).filter(contract__opt="Call").count():
                 results[ticker]['call'] = {}
@@ -254,8 +263,11 @@ def index_helper(req, user):
 
 
 #   from log.models import User, Contract, Transaction
+#   from django.db.models import Sum, Count, Avg
 
 # The proper way to do this is with annotation.
 # This will reduce the amount of database queries to 1, and ordering will be a simple order_by function:
 # from django.db.models import Count
 # cat_list = Category.objects.annotate(count=Count('project_set__id')).order_by('count')
+
+#Contract.objects.values('trades_c__contract__ticker').annotate(Sum('trades_c__total'))

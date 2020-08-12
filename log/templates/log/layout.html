@@ -7,6 +7,8 @@
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link href="{% static 'log/styles.css' %}" rel="stylesheet">
         <link rel="shortcut icon" type="image/png" href="{% static 'log/favicon-32x32.png' %}"/>
+        {% block script %}
+        {% endblock %}
     </head>
     <body>
         <ul class="nav">
@@ -42,7 +44,7 @@
         {% if message %}
             <div class="alert alert-warning" role="alert" style="text-align: center;">{{ message }}</div>
         {% endif %}
-        <main>
+        <main style="text-align: center; font-size: 12px; max-width: 98vw;">
             {% block body %}
             {% endblock %}
         </main>
