@@ -1,0 +1,1 @@
+This file is a placeholder so collectstatic will function on heroku. See further documentation on this here: https://devcenter.heroku.com/articles/django-assets
