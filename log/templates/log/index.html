@@ -36,7 +36,7 @@
             {% if not open_contracts %}
                 No open positions.<br><br>
             {% endif %}
-            <button class="btn btn-secondary btn-sm" id="refresh-expired">Remove Expired Contracts</button>
+            <button class="btn btn-secondary btn-sm mt-1" id="refresh-expired">Remove Expired Contracts</button>
             <hr>
             <h5>Stats</h5>
             <form class="form-inline" id="query-form" action="{% url 'index' %}" method="post">
@@ -54,10 +54,10 @@
                     </select>
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-1" id="date-start">
+                    <input type="date" class="form-control ml-1" id="date-start" name="start" value="{{ first_timestamp }}">
                 </div>
                 <div>
-                    <input type="date" class="form-control ml-1" id="date-end">
+                    <input type="date" class="form-control ml-1" id="date-end" name="end" value="{{ first_timestamp }}">
                 </div>
                 <input class="btn btn-secondary btn-sm ml-1" id="query-submit" type="submit" value="Submit">
             </form>
@@ -92,7 +92,7 @@
         </div>
         <div class="col">
             <div>
-                <h5>Transaction Log</h5>
+                <h5>All transactions</h5>
                 <small>All trades in Eastern time. Open positions in bold.</small>
             </div>
             <br>

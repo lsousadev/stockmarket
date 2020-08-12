@@ -69,6 +69,11 @@ def register(request):
 @login_required(login_url='/log/login')
 @csrf_exempt
 def index(request):
+    # In case user has no transactions yet
+    try:
+        first_transaction_datetime = Transaction.objects.filter(user=request.user).order_by('timestamp').first().timestamp
+    except:    
+        first_transaction_datetime = datetime.now()
     open_contracts = Contract.objects.filter(user=request.user).filter(open_qty__gt=0).order_by('-exp').all()
     if request.method == "PUT":
         expired = open_contracts.filter(exp__lt=datetime.now().date()).all()
@@ -83,19 +88,23 @@ def index(request):
     if request.method == "POST":
         # There are 4 possible results for the request, each represented by a number from 4-7
         req = int(request.POST.get('first')) + int(request.POST.get('second'))
-        results = index_helper(req, request.user)
+        start_date = datetime.strptime(request.POST.get('start'), '%Y-%m-%d') or first_transaction_datetime
+        end_date = datetime.strptime(request.POST.get('end'), '%Y-%m-%d') or datetime.now()
+        results = index_helper(req, request.user, start_date, end_date)
     else:
-        results = index_helper(4, request.user)
+        results = index_helper(4, request.user, first_transaction_datetime, datetime.now())
     return render(request, "log/index.html", {
         "open_contracts": open_contracts,
         "results": results,
-        "transactions": transactions
+        "transactions": transactions,
+        "first_timestamp": str(first_transaction_datetime)[0:10]
     })
 
 
 # Figure out login_required
 @login_required(login_url='/log/login')
 def upload(request):
+    print("checkpoint 0")
     user = request.user
     last = Transaction.objects.filter(user=user).order_by('-timestamp').first()
     if not last:
@@ -103,6 +112,7 @@ def upload(request):
     if request.method == "POST":
         #try :
         counter = webull_uploader(request.POST['trades'], user)
+        print("checkpoint 7")
         return render(request, "log/upload.html", {
             "message": f"Number of trades uploaded: {counter}."
         })
@@ -135,11 +145,11 @@ def webull_uploader(trades, user):
     # Turn textarea input into a csv "file" and read it in reverse order due to Webull putting latest trade first
     f = StringIO(trades)
     reader = csv.reader(f, delimiter=',')
-    print(reader)
     # If first line is header, skip
     next(reader)
     counter = 0
     for row in reversed(list(reader)):
+        print("checkpoint 1")
         # Skip cancelled and failed trade orders
         if row[3] != "Filled":
             continue
@@ -155,10 +165,12 @@ def webull_uploader(trades, user):
         timestamp = datetime.strptime(row[10][:-4], '%m/%d/%Y %H:%M:%S')
         ref = row[1]      # Could be row[0] as well
         # Skip repeat uploads, checking for exact same date and avg. Might need to add contract to filters
-        if Transaction.objects.filter(timestamp=timestamp).filter(avg=avg).all():
+        if Transaction.objects.filter(user=user).filter(timestamp=timestamp).filter(avg=avg).all():
+            print(Transaction.objects.filter(timestamp=timestamp).filter(avg=avg).all())
             continue
         # Create Contract object if doesn't exist yet
-        if not Contract.objects.filter(ref=ref).all():
+        if not Contract.objects.filter(user=user).filter(ref=ref).all():
+            print("checkpoint 3")
             contract = Contract(
                 user = user,
                 ticker = ticker,
@@ -173,7 +185,8 @@ def webull_uploader(trades, user):
             contract.save()
         # Update Contract object based on it being a sell or a buy
         else:
-            c = Contract.objects.get(ref=ref)
+            print("checkpoint 4")
+            c = Contract.objects.filter(user=user).get(ref=ref)
             old_avg = c.open_avg
             old_qty = c.open_qty
             old_total = c.open_total
@@ -198,9 +211,10 @@ def webull_uploader(trades, user):
         # Switch qty signals for transactions
         qty = -qty
         # Create new Transaction
+        print("checkpoint 5")
         transaction = Transaction(
             user = user,
-            contract = Contract.objects.get(ref=ref),
+            contract = Contract.objects.filter(user=user).get(ref=ref),
             side = side,
             qty = qty,
             avg = avg,
@@ -209,12 +223,13 @@ def webull_uploader(trades, user):
         )
         transaction.save()
         counter += 1
+        print("checkpoint 6")
     return counter
 
-def index_helper(req, user):
+def index_helper(req, user, start, end):
     results = {}
     user_contracts = Contract.objects.filter(user=user).all()
-    user_transactions = Transaction.objects.filter(user=user).all()
+    user_transactions = Transaction.objects.filter(user=user).filter(timestamp__gte=start).filter(timestamp__lte=end).all()
     total_trades = user_transactions.count()
     if req == 4:
         results['all'] = {'both': {}}
@@ -236,6 +251,8 @@ def index_helper(req, user):
         results['all']['put']['trade_perc'] = f'{round(total_puts / total_trades * 100)}% ({total_puts} of {total_trades})'
     elif req == 5:
         for ticker in user_contracts.values_list('ticker', flat=True).order_by('ticker').distinct(): # check end of page for possible ordering by transactions
+            if not user_transactions.filter(contract__ticker=ticker).count():
+                continue
             results[ticker] = {'both': {}}
             results[ticker]['both']['ticker'] = ticker
             results[ticker]['both']['opt'] = "All Options"
@@ -262,8 +279,8 @@ def index_helper(req, user):
     return results
 
 
-#   from log.models import User, Contract, Transaction
-#   from django.db.models import Sum, Count, Avg
+#from log.models import User, Contract, Transaction
+#from django.db.models import Sum, Count, Avg
 
 # The proper way to do this is with annotation.
 # This will reduce the amount of database queries to 1, and ordering will be a simple order_by function:

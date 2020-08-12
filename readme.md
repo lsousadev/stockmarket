@@ -37,6 +37,7 @@ A website with two apps:
 - [x] Favicon
 - [x] ~~Paginate transactions list on the right~~ Set transactions list height and make it scrollable
 - [x] ~~Fix commented lines in index.html to add Select Option placeholders and JS script for enabling and disabling Submit button~~ Not necessary anymore.
+- [x] Add date range for stats
 - [ ] Future - Optimize index_helper function (shows main page stats from form POST). Since only 4 possible results, each is currently hard-coded
 - [ ] Future - Chart representation for stats
 - [ ] Future - Sort/filter for tables

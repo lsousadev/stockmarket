@@ -36,13 +36,13 @@ main .form-control
 }
 
 .scrollable-medium {
-    max-height: 382px;
+    max-height: 372px;
     overflow: hidden;
     overflow-y: auto;
 }
 
 .scrollable-small {
-    max-height: 100px;
+    max-height: 86px;
     overflow: hidden;
     overflow-y: auto;
 }
