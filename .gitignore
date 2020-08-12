@@ -1,0 +1,2 @@
+staticfiles/*
+!staticfiles/do_not_delete.txt
